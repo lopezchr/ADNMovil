@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:ItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009"
+				xmlns:s="library://ns.adobe.com/flex/spark">
+	<s:Label id="lTitulo" top="10" bottom="10" width="95%" fontSize="18" horizontalCenter="0"
+			 text="{data.nombre}"/>
+</s:ItemRenderer>

@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark" actionBarVisible="false"
+		creationComplete="view1_creationCompleteHandler(event)">
+	
+	<fx:Script>
+		<![CDATA[
+			import DAO.consultaCliente;
+			
+			import utils.Parametros;
+			
+			import mx.collections.ArrayCollection;
+			import mx.events.FlexEvent;
+			
+			import utils.MadreEvent;
+			
+			import spark.components.TabbedViewNavigator;
+			import spark.events.IndexChangeEvent;
+			import spark.managers.PersistenceManager;
+			
+			private var lib:DAO.consultaCliente;
+			
+			protected function view1_creationCompleteHandler(event:FlexEvent):void
+			{
+				if(Parametros.ListaCliente.length > 0){
+					readyLista();
+					
+					var p:PersistenceManager = new PersistenceManager;
+					if(p.load()){
+						var obj:Object = p.getProperty("index");
+						if(obj != null){
+							listadoConsulta.selectedIndex = Number(obj);
+						}
+					}
+				}
+			}
+			
+			protected function bBuscar_clickHandler(event:MouseEvent):void
+			{
+				lResponse.text = "";
+				currentState = "busyState";
+				lib = new DAO.consultaCliente;
+				lib.addEventListener("readyCliente", readyLista);
+				lib.addEventListener("failCliente", failCousulta);
+				lib.start(tinput.text);
+			}
+			
+			protected function failCousulta(event:MadreEvent):void
+			{
+				lResponse.text = event.contenido.toString();
+				currentState = "initialState";
+			}
+			
+			private function readyLista(event:Event=null):void
+			{
+				var listCliente:ArrayCollection = new ArrayCollection();
+				
+				for each(var item:Object in Parametros.ListaCliente){
+					
+					//Se verifica que los datos vengan completos
+					if(item[0]!="$$INCOMPLETEDATA"){
+						listCliente.addItem({
+							v1:item[2].toString(),
+							v2:item[1].toString(),
+							id:item[0].toString()
+						});	
+						
+					}else{
+						lResponse.text = "Incompleto";
+					}
+					
+				}
+				currentState = "initialState";
+				listadoConsulta.dataProvider = listCliente;
+			}
+			
+			protected function listadoConsulta_changeHandler(event:MouseEvent):void
+			{
+				Parametros.paramsFact.cliente.id = listadoConsulta.selectedItem.id;
+				Parametros.paramsFact.cliente.cod = listadoConsulta.selectedItem.v1;
+				
+				var p:PersistenceManager = new PersistenceManager;
+				p.setProperty("index",listadoConsulta.selectedIndex);
+				
+				var tn:TabbedViewNavigator = navigator.parentNavigator as TabbedViewNavigator;
+				tn.getItemAt(1).enabled = true;
+				tn.getItemAt(2).enabled = false;
+				tn.getItemAt(3).enabled = false;
+				tn.selectedIndex = 1;
+				
+			}
+			
+			
+			
+		]]>
+	</fx:Script>
+	
+	<s:states>
+		<s:State name="initialState"/>
+		<s:State name="busyState"/>
+	</s:states>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:TextInput id="tinput" left="10" top="10" width="170"
+				 prompt.initialState="Nom/Cod Cliente"/>
+	<s:Button id="bBuscar" left="190" top="10" width="76" height="34" label="Buscar"
+			  click="bBuscar_clickHandler(event)"
+			  enabled.busyState="false"/>
+	<s:Label text="Codigo" top="60" left="20" fontWeight="bold" color="#6801B0"/>
+	<s:Label text="Nombre" top="60" right="20" fontWeight="bold" color="#6801B0"/>
+	<s:List id="listadoConsulta" left="10" right="10" 
+			top="80" bottom="40"
+			click="listadoConsulta_changeHandler(event)">
+		<s:itemRenderer>
+			<fx:Component>
+				<s:ItemRenderer>
+					<s:Label left="10" top="10" bottom="10" fontSize="12" text="{data.v1}" textAlign="left" width="50%" height="13"/>
+					<s:Label right="10" top="10" bottom="10" fontSize="12" text="{data.v2}" textAlign="right" width="50%" height="13"/>	
+				</s:ItemRenderer>		
+			</fx:Component>
+		</s:itemRenderer>
+	</s:List>
+	<s:BusyIndicator id="busyIndicator" width="200" height="200" horizontalCenter="0"
+					 verticalCenter="0"
+					 visible="false"/>
+	<s:Label id="lResponse" left="10" bottom="10" color="#F06F08"
+			 fontWeight="bold"/>
+	<s:BusyIndicator includeIn="busyState" right="10" top="10" width="35" height="35"/>
+</s:View>

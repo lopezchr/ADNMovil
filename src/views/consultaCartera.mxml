@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009"
+		xmlns:s="library://ns.adobe.com/flex/spark"
+		currentState="initialState" title="Consulta Cartera"
+		creationComplete="view1_creationCompleteHandler(event)">
+	<s:states>
+		<s:State name="initialState"/>
+		<s:State name="busyState"/>
+	</s:states>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:CurrencyFormatter id="formater" 
+							 useGrouping="true"
+							 useCurrencySymbol="true"
+							 currencySymbol="$"
+							 positiveCurrencyFormat="0"
+							 negativeCurrencyFormat="1"
+							 />
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import DAO.consultaCartera;
+			
+			import utils.Parametros;
+			
+			import flash.sampler.NewObjectSample;
+			
+			import flashx.textLayout.formats.Float;
+			
+			import mx.collections.ArrayCollection;
+			import mx.events.FlexEvent;
+			
+			import utils.MadreEvent;
+			
+			import spark.events.IndexChangeEvent;
+			import spark.managers.PersistenceManager;
+			
+			private var lib:DAO.consultaCartera;
+			
+			protected function view1_creationCompleteHandler(event:FlexEvent):void
+			{
+				if(Parametros.ListaCartera.length > 0){
+					readyLista();
+				}
+			}
+			
+			protected function bBuscar_clickHandler(event:MouseEvent):void
+			{
+				lResponse.text = "";
+				lTotalCartera.text = "";
+				currentState = "busyState";
+				lib = new DAO.consultaCartera;
+				lib.addEventListener("readyCartera", readyLista);
+				lib.addEventListener("failCartera", failCousulta);
+				lib.start(tinput.text);
+			}
+			
+			protected function readyLista(event:MadreEvent=null):void
+			{
+				var total:Number = 0;
+				var listCartera:ArrayCollection = new ArrayCollection();
+
+				for each(var item:Object in Parametros.ListaCartera){
+					
+					//Se verifica que los datos vengan completos
+					if(item[0]!="$$INCOMPLETEDATA"){
+						listCartera.addItem({
+							id:item[0].toString(),
+							codigo:item[1].toString(),
+							nombre:item[2].toString(),
+							valor:formater.format(item[3].toString().replace(",","."))
+						});	
+						
+					}else{
+						lResponse.text = "Incompleto";
+					}
+					
+				}
+				
+				var pm:PersistenceManager = new PersistenceManager;
+				if(event==null){
+					
+					if(pm.load()){
+						var obj:Object = pm.getProperty("total");
+						if(obj){
+							lTotalCartera.text = "Total: " +formater.format(obj.toString().replace(",","."));	
+						}
+					}
+				}else{
+					lTotalCartera.text = "Total: " +formater.format(event.contenido[0][0].toString().replace(",","."));
+					pm.setProperty("total", event.contenido[0][0].toString());
+				}
+				
+				currentState = "initialState";
+				listadoConsulta.dataProvider = listCartera;
+			}
+			
+			protected function listadoConsulta_changeHandler(event:IndexChangeEvent):void
+			{
+				//en caso de que la seleccion del menu principal halla sido cartera
+				navigator.pushView(detalleCartera, listadoConsulta.selectedItem);	
+			}
+			
+			protected function failCousulta(event:MadreEvent):void
+			{
+				currentState = "initialState";
+				lResponse.text = event.contenido.toString();
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:actionContent>
+		<s:Button label="Salir" click="NativeApplication.nativeApplication.exit()"/>
+	</s:actionContent>
+	<s:TextInput id="tinput" left="10" top="10" width="170"
+				 prompt.initialState="Nom/Cod Cliente"/>
+	<s:Button id="bBuscar" left="190" top="10" width="76" height="34" label="Buscar"
+			  click="bBuscar_clickHandler(event)"
+			  enabled.busyState="false"/>
+	<s:List id="listadoConsulta" left="10" right="10" 
+			top="80" bottom="40"
+			itemRenderer="utils.lista3Renderer" 
+			change="listadoConsulta_changeHandler(event)"></s:List>
+	<s:BusyIndicator id="busyIndicator" width="200" height="200" horizontalCenter="0"
+					 verticalCenter="0"
+					 visible="false"/>
+	<s:Label id="lTotalCartera" right="10" bottom="10" fontSize="16"
+			 color="#18B6F0" fontWeight="bold"/>
+	<s:Label left="100" top="55" text="Nombre"
+			 color="#6801B0" fontWeight="bold"/>
+	<s:Label right="10" top="55" text="Valor"
+			 color="#6801B0" fontWeight="bold"/>
+	<s:Label id="lResponse" left="10" bottom="10" color="#F06F08"
+			 fontWeight="bold"/>
+	<s:Label left="10" top="55" text="Codigo"
+			 color="#6801B0" fontWeight="bold"/>
+	<s:BusyIndicator includeIn="busyState" left="275" top="15"/>
+
+</s:View>

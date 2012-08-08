@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark" actionBarVisible="false"
+		creationComplete="view1_creationCompleteHandler(event)">
+	
+	<s:states>
+		<s:State name="initialState"/>
+		<s:State name="lockState"/>
+	</s:states>
+	
+	<fx:Script>
+		<![CDATA[
+			import DAO.factParams;
+			
+			import flash.utils.flash_proxy;
+			
+			import mx.collections.ArrayCollection;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			
+			import spark.components.TabbedViewNavigator;
+			import spark.managers.PersistenceManager;
+			
+			import utils.MadreEvent;
+			import utils.Parametros;
+			
+			[Bindable]
+			protected var paramsFact:Object = Parametros.paramsFact;
+			
+			private var lib:DAO.factParams;
+			
+			//funcion que se ejecuta al iniciar la vista
+			protected function view1_creationCompleteHandler(event:FlexEvent):void
+			{
+				//se cargan los datos guardados
+				var p:PersistenceManager = new PersistenceManager();
+				if(p.load()){
+					var obj:Object = p.getProperty("params");
+					if(obj != null){
+						paramsFact = obj;
+						if(Parametros.paramsFact.cliente.id != paramsFact.cliente.id){
+							paramsFact.cliente.id = Parametros.paramsFact.cliente.id;
+							paramsFact.cliente.nombre = Parametros.paramsFact.cliente.nombre;
+							paramsFact.cliente.cod = Parametros.paramsFact.cliente.cod;				
+						}
+					}
+					//se carga el estado de la interfaz
+					var obj2:Object = p.getProperty("islock");
+					if(obj2 != null){
+						if(obj2 == true){
+							currentState = "lockState";
+						}
+					}
+				}
+				saveParams();
+				
+				paramsFact.vendedor.id = Parametros.UserId.toString();
+				
+				initComponents();
+			}
+			
+			//funcion que actualiza los valores de la interfaz
+			private function initComponents():void{
+				lDocumentCod.text = paramsFact.tdoc.cod;
+				lDocumentName.text = paramsFact.tdoc.nombre;
+				lCcostoCod.text = paramsFact.ccosto.cod;
+				lCcostoName.text = paramsFact.ccosto.nombre;
+				lBodegaId.text = paramsFact.bodega.id;
+				lBodegaName.text = paramsFact.bodega.nombre;
+				lLprecioId.text = paramsFact.lprecios.id;
+				lLprecioName.text = paramsFact.lprecios.nombre;
+				lNomVendedor.text = Parametros.Login;
+			}
+			
+			//funcion que se ejecuta al fallar la consulta de validacion
+			protected function onFailParams(event:MadreEvent):void
+			{
+				lResult.text = event.contenido.toString();
+				currentState = "initialState";
+			}
+			
+			//salva los parametros ingresados en variable global y en datos de persistencia
+			protected function saveParams():void{
+				Parametros.paramsFact = paramsFact;
+				var p:PersistenceManager = new PersistenceManager();				
+				p.setProperty("params",paramsFact);
+			}
+			
+			protected function tdoc_clickHandler(event:MouseEvent):void{
+				popDocumento.open(this);
+				PopUpManager.centerPopUp(popDocumento);
+				tdocumento.text = paramsFact.tdoc.cod;
+				tdocumento.setFocus();
+			}
+			
+			protected function ccosto_clickHandler(event:MouseEvent):void
+			{
+				popCcosto.open(this);
+				PopUpManager.centerPopUp(popCcosto);
+				tccosto.text = paramsFact.ccosto.cod;
+				tccosto.setFocus();
+			}
+			
+			protected function bodega_clickHandler(event:MouseEvent):void
+			{
+				popBodega.open(this);
+				PopUpManager.centerPopUp(popBodega);
+				tbodega.text = paramsFact.bodega.id;
+				tbodega.setFocus();
+			}
+			
+			protected function lprecios_clickHandler(event:MouseEvent):void
+			{
+				popLprecios.open(this);
+				PopUpManager.centerPopUp(popLprecios);
+				tlprecios.text = paramsFact.lprecios.id;
+				tlprecios.setFocus();
+			}
+			///////
+			protected function setTdocumento():void{
+				paramsFact.tdoc.cod = tdocumento.text;
+				initComponents();
+				popDocumento.close();
+			}
+			protected function setCcosto():void{
+				paramsFact.ccosto.cod = tccosto.text;
+				initComponents();
+				popCcosto.close();
+			}
+			protected function setBodega():void{
+				paramsFact.bodega.id = tbodega.text;
+				initComponents();
+				popBodega.close();
+			}
+			protected function setLprecios():void{
+				paramsFact.lprecios.id = tlprecios.text;
+				popLprecios.close();
+				initComponents();
+			}
+			
+			protected function valida_clickHandler(event:MouseEvent):void
+			{
+				saveParams();
+				
+				if(
+					Parametros.paramsFact.tdoc.cod == "" || 
+					Parametros.paramsFact.cliente.id == "" ||
+					Parametros.paramsFact.ccosto.cod == "" ||
+					Parametros.paramsFact.bodega.id == "" ||
+					Parametros.paramsFact.vendedor.id == "" ||
+					Parametros.paramsFact.lprecios.id == ""
+				){
+					lResult.text = "Parametros incompletos.";
+				}else{
+					var objpr:Object = Parametros.paramsFact;
+					//se validan los datos con la base de datos
+					currentState = "lockState";
+					
+					lib = new DAO.factParams();
+					lib.addEventListener("readyFactParams", onvalidate);
+					lib.addEventListener("failFactParams", onFailParams);
+					
+					lResult.text = "";
+					
+					lib.validateData();
+					busyidicator.visible = true;
+				}
+				
+			}
+			
+			protected function onvalidate(event:MadreEvent=null):void
+			{
+				busyidicator.visible = false;
+				var result:Object = event.contenido;
+				
+				var item:Array = new Array; 
+				
+				item = result[0][0].toString().split(":");
+				Parametros.paramsFact.tdoc.id = item[1];
+				Parametros.paramsFact.tdoc.nombre = item[0];
+				
+				item = result[0][1].toString().split(":");
+				Parametros.paramsFact.cliente.nombre = item[0];
+				
+				item = result[0][2].toString().split(":");
+				Parametros.paramsFact.ccosto.id = item[1];
+				Parametros.paramsFact.ccosto.nombre = item[0];
+				
+				Parametros.paramsFact.bodega.nombre = result[0][3];
+				
+				item = result[0][4].toString().split(":");
+				
+				Parametros.paramsFact.vendedor.id = item[1];
+				Parametros.paramsFact.vendedor.nombre = item[0];
+				
+				Parametros.paramsFact.lprecios.nombre = result[0][5];
+				
+				saveParams();
+				initComponents();
+				
+				var objpr:Object = Parametros.paramsFact;
+				
+				if(Parametros.paramsFact.vendedor.nombre.toString().substr(0,3)=="ERR"){
+					lResult.text = "VENDENDOR "+Parametros.paramsFact.vendedor.nombre.toString().substr(4);
+					currentState = "initialState";
+				}else if(Parametros.paramsFact.cliente.nombre.toString().substr(0,3)=="ERR"){
+					lResult.text = "CLIENTE "+Parametros.paramsFact.cliente.nombre.toString().substr(4);
+					currentState = "initialState";
+				}else{
+					if(
+						Parametros.paramsFact.tdoc.nombre.toString().substr(0,3) == "ERR" ||
+						Parametros.paramsFact.ccosto.nombre.toString().substr(0,3) == "ERR" ||
+						Parametros.paramsFact.bodega.nombre.toString().substr(0,3) == "ERR" ||
+						Parametros.paramsFact.lprecios.nombre.toString().substr(0,3) == "ERR"
+					){
+						lResult.text = "Parametros invalidos";
+						currentState = "initialState";
+					}else{
+						var p:PersistenceManager = new PersistenceManager;
+						p.setProperty("islock", true);
+						
+						var tn:TabbedViewNavigator = navigator.parentNavigator as TabbedViewNavigator;
+						tn.getItemAt(2).enabled = true;
+						tn.getItemAt(3).enabled = true;
+						tn.selectedIndex = 2;
+					}
+				}
+				
+			}
+			
+			protected function restart_clickHandler(event:MouseEvent):void
+			{
+				var p:PersistenceManager = new PersistenceManager;
+				p.setProperty("islock", false);
+				
+				currentState = "initialState";
+				
+				var tn:TabbedViewNavigator = navigator.parentNavigator as TabbedViewNavigator;
+				tn.getItemAt(2).enabled = false;
+				tn.getItemAt(3).enabled = false;
+				
+				Parametros.listaItemsFactura = new ArrayCollection;
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:SkinnablePopUpContainer id="popDocumento">
+			<s:Rect width="100%" height="100%" topRightRadiusX="15" bottomLeftRadiusX="15" bottomRightRadiusX="15">
+				<s:stroke>
+					<s:SolidColorStroke color="#424242"/>
+				</s:stroke>
+				<s:fill>
+					<s:SolidColor color="#424242"/>
+				</s:fill>
+			</s:Rect>
+			<s:VGroup horizontalAlign="center" paddingTop="20" paddingLeft="20" paddingRight="20" paddingBottom="20">
+				<s:Group>
+					<s:TextInput id="tdocumento" width="80%" top="10" horizontalCenter="0" prompt="Cod tipo documento"/>
+					<s:Button label="Aplicar" height="35" click="setTdocumento()" top="50" horizontalCenter="0"/>
+				</s:Group>
+			</s:VGroup>			
+		</s:SkinnablePopUpContainer>
+		
+		<s:SkinnablePopUpContainer id="popCcosto">
+			<s:Rect width="100%" height="100%" topRightRadiusX="15" bottomLeftRadiusX="15" bottomRightRadiusX="15">
+				<s:stroke>
+					<s:SolidColorStroke color="#424242"/>
+				</s:stroke>
+				<s:fill>
+					<s:SolidColor color="#424242"/>
+				</s:fill>
+			</s:Rect>
+			
+			<s:VGroup horizontalAlign="center" paddingTop="20" paddingLeft="20" paddingRight="20" paddingBottom="20">
+				<s:Group>
+					<s:TextInput id="tccosto" width="80%" top="10" horizontalCenter="0" prompt="Cod centro de costo"/>
+					<s:Button label="Aplicar" height="35" click="setCcosto()" top="50" horizontalCenter="0"/>
+				</s:Group>
+			</s:VGroup>		
+		</s:SkinnablePopUpContainer>
+		
+		<s:SkinnablePopUpContainer id="popBodega">
+			<s:Rect width="100%" height="100%" topRightRadiusX="15" bottomLeftRadiusX="15" bottomRightRadiusX="15">
+				<s:stroke>
+					<s:SolidColorStroke color="#424242"/>
+				</s:stroke>
+				<s:fill>
+					<s:SolidColor color="#424242"/>
+				</s:fill>
+			</s:Rect>
+			
+			<s:VGroup horizontalAlign="center" paddingTop="20" paddingLeft="20" paddingRight="20" paddingBottom="20">
+				<s:Group>
+					<s:TextInput id="tbodega" width="80%" top="10" horizontalCenter="0" prompt="Id Bodega"/>
+					<s:Button label="Aplicar" height="35" click="setBodega()" top="50" horizontalCenter="0"/>
+				</s:Group>
+			</s:VGroup>			
+		</s:SkinnablePopUpContainer>
+		
+		<s:SkinnablePopUpContainer id="popLprecios">
+			<s:Rect width="100%" height="100%" topRightRadiusX="15" bottomLeftRadiusX="15" bottomRightRadiusX="15">
+				<s:stroke>
+					<s:SolidColorStroke color="#424242"/>
+				</s:stroke>
+				<s:fill>
+					<s:SolidColor color="#424242"/>
+				</s:fill>
+			</s:Rect>
+			
+			<s:VGroup horizontalAlign="center" paddingTop="20" paddingLeft="20" paddingRight="20" paddingBottom="20">
+				<s:Group>
+					<s:TextInput id="tlprecios" width="80%" top="10" horizontalCenter="0" prompt="Id Lista de precios"/>
+					<s:Button label="Aplicar" height="35" click="setLprecios()" top="50" horizontalCenter="0"/>
+				</s:Group>
+			</s:VGroup>				
+		</s:SkinnablePopUpContainer>
+		
+	</fx:Declarations>
+
+	<s:Group left="10" right="10" top="10" height="40">
+		<s:Label left="0" width="75" textAlign="right" text="Vendedor:" verticalCenter="0" fontSize="14"/>
+		<s:Label id="lNomVendedor" left="80" fontSize="14" verticalCenter="0"
+				 fontWeight="bold" right="110" height="14"/>
+		<s:Button right="0" height="40" click="valida_clickHandler(event)" verticalCenter="0"
+				  width="40" icon="img/chulo.png"/>
+		<s:Label right="50" text="Validar" verticalCenter="0"/>
+	</s:Group>
+	<s:Scroller bottom="40" top="60" width="100%">
+		<s:Group width="100%" height="100%">
+			<s:Group left="10" right="10" top="0" height="40">
+				<s:Label left="0" text="T Doc:" verticalCenter="0" fontSize="14" width="75" textAlign="right"/>
+				<s:Button left="80" width="25" height="25" label="*" click="tdoc_clickHandler(event)"
+						  verticalCenter="0"
+						  enabled.lockState="false"/>
+				<s:Label id="lDocumentCod" left="120" verticalCenter="0" fontSize="14" width="50"/>
+				<s:Label id="lDocumentName" right="0" left="180" verticalCenter="0" height="14" fontSize="14"/>
+			</s:Group>
+			<s:Group left="10" right="10" top="50" height="40">
+				<s:Label left="0" text="C Costo:" verticalCenter="0" fontSize="14" width="75" textAlign="right"/>
+				<s:Button left="80" width="25" height="25" label="*" click="ccosto_clickHandler(event)"
+						  verticalCenter="0"
+						  enabled.lockState="false"/>
+				<s:Label id="lCcostoCod" left="120" verticalCenter="0" fontSize="14" width="50"/>
+				<s:Label id="lCcostoName" right="0" left="180" verticalCenter="0" height="14" fontSize="14"/>
+			</s:Group>
+			<s:Group left="10" right="10" top="100" height="40">
+				<s:Label left="0" text="Bodega:" verticalCenter="0" fontSize="14" width="75" textAlign="right"/>
+				<s:Button left="80" width="25" height="25" label="*" click="bodega_clickHandler(event)"
+						  verticalCenter="0"
+						  enabled.lockState="false"/>
+				<s:Label id="lBodegaId" left="120"  verticalCenter="0" fontSize="14" width="50"/>
+				<s:Label id="lBodegaName" right="0" left="180" verticalCenter="0" height="14" fontSize="14"/>
+			</s:Group>
+			<s:Group left="10" right="10" top="150" height="40">
+				<s:Label left="0" text="L Precios:" verticalCenter="0" width="75" textAlign="right"/>
+				<s:Button left="80" width="25" height="25" label="*" click="lprecios_clickHandler(event)"
+						  verticalCenter="0"
+						  enabled.lockState="false"/>
+				<s:Label id="lLprecioId" left="120" verticalCenter="0" fontSize="14" width="50"/>
+				<s:Label id="lLprecioName" right="0" left="180" verticalCenter="0" height="14" fontSize="14"/>
+			</s:Group>
+			<s:Group left="10" right="10" top="200" height="40">
+				<s:Label includeIn="lockState" text="Desbloquear" left="130" verticalCenter="0"/>
+				<s:Button includeIn="lockState" left="75" width="40" height="40"
+						  click="restart_clickHandler(event)" icon="img/candado.png" verticalCenter="0"/>
+			</s:Group>
+		</s:Group>
+	</s:Scroller>
+	
+	<s:BusyIndicator visible="false" id="busyidicator" left="10" bottom="10" width="30" height="30"/>
+	<s:Label right="10" bottom="10"
+			 color="#F06F08" fontWeight="bold" id="lResult" fontSize="12"/>
+</s:View>

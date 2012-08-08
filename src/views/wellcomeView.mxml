@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009"
+		xmlns:s="library://ns.adobe.com/flex/spark"
+		actionBarVisible="true" title="Bienvenido">
+	
+	<fx:Script>
+		<![CDATA[
+			import utils.Parametros;
+			
+			import mx.managers.PopUpManager;
+			
+			protected function label1_clickHandler(event:MouseEvent):void
+			{
+				pop1.open(this);
+				PopUpManager.centerPopUp(pop1);
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:SkinnablePopUpContainer id="pop1">
+			<s:Rect width="100%" height="100%" topRightRadiusX="15" bottomLeftRadiusX="15" bottomRightRadiusX="15">
+				<s:stroke>
+					<s:SolidColorStroke color="#424242"/>
+				</s:stroke>
+				<s:fill>
+					<s:SolidColor color="#424242"/>
+				</s:fill>
+			</s:Rect>
+			
+			<s:VGroup horizontalAlign="center"
+					  paddingTop="20" paddingLeft="20" paddingRight="20" paddingBottom="20">
+				<s:List dataProvider="{Parametros.listLog}" labelField="detail" width="250" height="80%"/>
+				<s:Button label="Cerrar" height="35" click="pop1.close();"/>
+			</s:VGroup>			
+		</s:SkinnablePopUpContainer>
+	</fx:Declarations>
+	<s:actionContent>
+		<s:Button label="Salir" click="NativeApplication.nativeApplication.exit()"/>
+	</s:actionContent>
+	
+	<s:Image width="100%" height="100%" horizontalCenter="0" source="img/logoMarcaAgua.png"
+			 verticalCenter="0"/>
+	<s:Label right="0" bottom="0" width="20" height="20" click="label1_clickHandler(event)"/>
+	<s:Image left="0" top="0" width="197" height="132" source="img/rect.png"/>
+	<s:Label left="18" top="62" width="165" height="52" fontFamily="Arial" fontSize="14"
+			 text="Bienveniedo a ADNmovil. Para empezar pulse el boton Menu"/>
+	
+	
+</s:View>

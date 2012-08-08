@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009"
+		xmlns:s="library://ns.adobe.com/flex/spark"
+		actionBarVisible="false" tabBarVisible="true" title="principalView"
+		backKeyPressed="view1_backKeyPressedHandler(event)"
+		addedToStage="view1_addedToStageHandler(event)"
+		creationComplete="view1_creationCompleteHandler(event)"
+		>
+	<fx:Script>
+		<![CDATA[
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			
+			protected function view1_backKeyPressedHandler(event:FlexEvent):void
+			{
+				if(adnNavigator.viewNavigatorPopUp.isOpen){
+					event.preventDefault();
+					adnNavigator.hideViewNavigatorPopUp();		
+				}else{
+					if(detailnav.length != 1){
+						event.preventDefault();
+						detailnav.popView();
+					}else{
+						event.preventDefault();
+						popExit.open(this);
+						PopUpManager.centerPopUp(popExit);
+					}
+				}
+				
+			}
+			
+			protected function resize_handler(event:Event = null):void
+			{
+				
+				trace("resize");
+				
+				if(stage.width > 1024){
+					menuNavigator.visible = true;
+					navigatorButton.visible = false;
+				}else{
+					menuNavigator.visible = false;
+					navigatorButton.visible = true;
+				}
+			}
+			
+			protected function view1_addedToStageHandler(event:Event):void
+			{
+				stage.addEventListener(Event.RESIZE , resize_handler);				
+			}
+			
+			protected function view1_creationCompleteHandler(event:FlexEvent):void
+			{
+				resize_handler();
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:SkinnablePopUpContainer id="popExit">
+			<s:Rect width="100%" height="100%" topRightRadiusX="15" bottomLeftRadiusX="15" bottomRightRadiusX="15">
+				<s:stroke>
+					<s:SolidColorStroke color="#424242"/>
+				</s:stroke>
+				<s:fill>
+					<s:SolidColor color="#424242"/>
+				</s:fill>
+			</s:Rect>
+			<s:VGroup horizontalAlign="center" paddingTop="20" paddingLeft="20" paddingRight="20" paddingBottom="20">
+				<s:Group>
+					<s:Label top="10" horizontalCenter="0" text="Desea cerrar su session?" color="White" fontWeight="bold"/>
+					<s:Button label="Cancelar" height="35" click="popExit.close()" top="50" horizontalCenter="-60"/>
+					<s:Button label="Cerrar Session" height="35" click="popExit.close();navigator.popView();" top="50" horizontalCenter="60"/>
+				</s:Group>
+			</s:VGroup>			
+		</s:SkinnablePopUpContainer>
+	</fx:Declarations>
+	<s:states>
+		<s:State name="portrait"/>
+		<s:State name="landscape"/>
+	</s:states>
+	
+	<s:SplitViewNavigator width="100%" height="100%" autoHideFirstViewNavigator="false" id="adnNavigator" >
+		<s:ViewNavigator firstView="views.menuOpcionesView" width="300" height="100%" visible="false" id="menuNavigator"/>
+		<s:ViewNavigator firstView="views.wellcomeView" width="100%" height="100%" id="detailnav">
+			<s:navigationContent>
+				<s:Button id="navigatorButton" 
+						  label="Menu" 
+						  click="adnNavigator.showFirstViewNavigatorInPopUp(navigatorButton);"
+						  visible="true"/>
+			</s:navigationContent>
+		</s:ViewNavigator>
+	</s:SplitViewNavigator>
+</s:View>

@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009"
+		xmlns:s="library://ns.adobe.com/flex/spark"
+		creationComplete="view1_creationCompleteHandler(event)" title="Bienvenido a ADN Movil"
+		actionBarVisible="true">
+	
+	<fx:Script>
+		<![CDATA[
+			import DAO.login;
+			
+			import flash.net.NetworkInfo;
+			
+			import mx.events.FlexEvent;
+			
+			import spark.managers.PersistenceManager;
+			import spark.transitions.CrossFadeViewTransition;
+			
+			import utils.LoginEvent;
+			import utils.MadreEvent;
+			import utils.Parametros;
+			
+			private var Login:login;
+			
+			import com.adobe.crypto.HMAC;
+			
+			//condigo que se ejecuta al iniciar la vista
+			protected function view1_creationCompleteHandler(event:FlexEvent):void
+			{
+				var crosFadeView:CrossFadeViewTransition = new CrossFadeViewTransition();
+				navigator.defaultPopTransition = crosFadeView;
+				navigator.defaultPushTransition = crosFadeView;	
+				
+				Parametros.resetListas();
+				
+				var ni:NetworkInfo = NetworkInfo.networkInfo;
+				var interfaceVector:Vector.<NetworkInterface> = ni.findInterfaces();
+				for each (var item:NetworkInterface in interfaceVector)
+				{
+					trace(item.hardwareAddress);
+					var hash:String = com.adobe.crypto.HMAC.hash("hmac", item.hardwareAddress);
+					Parametros.mobileid = hash.substr(hash.length -5 ,5);
+					trace(Parametros.mobileid);
+				}
+				
+				//carga de datos persistentes
+				
+				var loadManager:PersistenceManager = new PersistenceManager;
+				if(loadManager.load()){
+					var dataemp:Object = loadManager.getProperty("emp");
+					if(dataemp){
+						tempresa.text = dataemp.toString();
+					}
+					
+					var datauser:Object = loadManager.getProperty("usua");
+					if(datauser){
+						tlogin.text = datauser.toString();	
+					}
+				}
+				
+			}
+			
+			protected function exit(event:MouseEvent):void
+			{
+				NativeApplication.nativeApplication.exit();
+			}
+			
+			protected function gologin(event:MouseEvent):void
+			{
+				lResult.text = "";
+				if(tempresa.text == "" || tlogin.text == "" || tpass.text == ""){
+					lResult.setStyle("color","#ED1313");
+					lResult.text = "Por favor digite todos los campos.";
+				}else{
+					currentState = "busyState";
+					Login = new login;
+					Login.addEventListener("LoginError", failLogin);
+					Login.addEventListener("MULTIPLES_SISTEMAS", cargaSystemasResult);
+					Login.addEventListener("UNICO_SISTEMA",cargaMenuOpciones);
+					
+					Parametros.Empresa = tempresa.text;
+					Parametros.Login = tlogin.text;
+					Parametros.Pass = tpass.text;
+										
+					Login.start();
+				}
+			}
+			
+			protected function failLogin(event:LoginEvent):void
+			{
+				currentState = "normalState";
+				Login.removeEventListener("LoginError", failLogin);
+				lResult.setStyle("color","#ED1313");
+				lResult.text = event.obj;
+			}
+			
+			protected function cargaSystemasResult(event:Event):void
+			{
+				savePersistanceData();
+				currentState = "normalState";
+				Login.removeEventListener("MULTIPLES_SISTEMAS", cargaSystemasResult);
+				
+				
+				navigator.pushView(SelectSystemsView);
+			}
+			
+			protected function cargaMenuOpciones(event:Event):void
+			{
+				savePersistanceData();
+				currentState = "normalState";
+				Login.removeEventListener("UNICO_SISTEMA",cargaMenuOpciones);
+				navigator.pushView(principalView);
+			}
+			
+			protected function savePersistanceData():void{
+				var saveManager:PersistenceManager = new PersistenceManager;
+				saveManager.setProperty("emp", tempresa.text);
+				saveManager.setProperty("usua", tlogin.text);
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<s:states>
+		<s:State name="normalState"/>
+		<s:State name="busyState"/>
+	</s:states>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:actionContent>
+		<s:Button label="Salir" click="exit(event)" enabled.busyState="false"/>
+	</s:actionContent>
+	<s:VGroup top="20" width="250" height="160" horizontalCenter="0">
+		<s:Group width="250">
+			<s:Label fontSize="14" text="Empresa:" right="190" verticalCenter="0" textAlign="right"/>
+			<s:TextInput id="tempresa" enabled.busyState="false" right="0" width="180" verticalCenter="0"/>
+		</s:Group>				 
+		<s:Spacer width="10" height="10"/>
+		<s:Group width="250">
+			<s:Label text="Persona:" fontSize="14" right="190" verticalCenter="0" textAlign="right"/>
+			<s:TextInput id="tlogin" width="180" enabled.busyState="false" right="0" />
+		</s:Group>
+		<s:Spacer width="10" height="10"/>
+		<s:Group width="250">
+			<s:Label text="Clave:" fontSize="14" right="190" textAlign="right" verticalCenter="0"/>
+			<s:TextInput id="tpass" width="180" displayAsPassword="true" right="0" enabled.busyState="false"/>
+		</s:Group>
+	</s:VGroup>
+	<s:Label id="lResult" top="240" fontSize="14" horizontalCenter="0"/>
+	<s:Group left="10" right="10" top="280" bottom="10">
+		<s:Image width="100%" height="100%" horizontalCenter="0" source="img/logoMarcaAgua.png"
+				 verticalCenter="0"/>
+	</s:Group>
+	<s:Button includeIn="normalState" top="190" width="90" label="Entrar" click="gologin(event)"
+			  horizontalCenter="0"/>
+	<s:BusyIndicator includeIn="busyState" top="200" width="30" height="30" horizontalCenter="0"/>
+</s:View>

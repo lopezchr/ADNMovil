@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009"
+		xmlns:s="library://ns.adobe.com/flex/spark"
+		actionBarVisible="false" creationComplete="view1_creationCompleteHandler(event)"
+		tabBarVisible="true" title="factTotalesView">
+	<s:states>
+		<s:State name="initialState"/>
+		<s:State name="busyState"/>
+	</s:states>
+	<fx:Script>
+		<![CDATA[
+			import DAO.factTotales;
+			
+			import utils.Parametros;
+			
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			
+			import utils.MadreEvent;
+			
+			import spark.components.TabbedViewNavigator;
+			
+			private var lib:DAO.factTotales;
+			
+			protected function view1_creationCompleteHandler(event:FlexEvent):void
+			{
+				var totalMercancia:Number = 0;
+				var totalServicio:Number = 0;
+				var totalIva:Number = 0;
+				var totalDescuento:Number = 0;
+				var subTotal:Number = 0;
+				
+				for each(var item:Object in Parametros.listaItemsFactura){
+					
+					if(item.tipo.toString() == "B"){
+						totalMercancia += item.subtotal;
+					}else{
+						totalServicio += item.subtotal;	
+					}
+					
+					subTotal += item.subtotal;
+					
+					totalIva += Number(item.subtotal)*Number(item.grav)/100 ; 
+					totalDescuento += Number(item.valoru)*Number(item.cantidad)*Number(item.descuento)/100;
+				}
+				
+				
+				tMercancia.text = formater.format(totalMercancia);
+				tServicios.text = formater.format(totalServicio);
+				tIva.text = formater.format(totalIva);
+				tDescuento.text = formater.format(totalDescuento);
+				tCtaCobrar.text = formater.format(subTotal + totalIva);
+				
+				tDescuento.setFocus();
+			}
+			
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+				lib = new factTotales;
+				lib.addEventListener("readyTotales", readyFactura);
+				lib.addEventListener("failTotales", failFactura);
+				lib.start();
+				
+				currentState = "busyState";
+				popInProces.open(this);
+				
+				lpopResult.text = "Factura en Proceso....";
+				
+				PopUpManager.centerPopUp(popInProces);
+			}
+			
+			protected function readyFactura(event:MadreEvent):void
+			{
+				currentState = "initialState";
+				
+				if(event.contenido[0][0].toString() == "OK"){
+					lpopResult.text = "Factura Exitosa.";
+				}else{
+					lpopResult.text = event.contenido[0][0].toString();
+				}
+				
+			}
+			
+			protected function failFactura(event:MadreEvent):void
+			{
+				currentState = "initialState";
+				lpopResult.text = event.contenido.toString();
+			}
+			
+			protected function endProcess():void
+			{
+				popInProces.close();
+				if(lpopResult.text == "Factura Exitosa."){
+					var tn:TabbedViewNavigator = navigator.parentNavigator as TabbedViewNavigator;
+					tn.getItemAt(1).enabled = false;
+					tn.getItemAt(2).enabled = false;
+					tn.getItemAt(3).enabled = false;
+					tn.selectedIndex = 0;
+				}
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:CurrencyFormatter id="formater" 
+							 useGrouping="true"
+							 useCurrencySymbol="true"
+							 currencySymbol="$"
+							 positiveCurrencyFormat="0"
+							 negativeCurrencyFormat="1"
+							 />
+		
+		<s:SkinnablePopUpContainer id="popInProces">
+			<s:Rect width="100%" height="100%" topRightRadiusX="15" bottomLeftRadiusX="15" bottomRightRadiusX="15">
+				<s:stroke>
+					<s:SolidColorStroke color="#424242"/>
+				</s:stroke>
+				<s:fill>
+					<s:SolidColor color="#424242"/>
+				</s:fill>
+			</s:Rect>
+			<s:VGroup width="100%" horizontalAlign="center" paddingBottom="20" paddingLeft="20" paddingRight="20" paddingTop="20">
+				<s:Group>
+					<s:Label id="lpopResult" top="10" horizontalCenter="0" color="White" fontWeight="bold"/>
+					<s:Button includeIn="initialState" top="50" label="Cerrar" click="endProcess()"/>
+					<s:BusyIndicator width="35" height="35" horizontalCenter="0" top="50" includeIn="busyState"/>
+				</s:Group>
+			</s:VGroup>
+		</s:SkinnablePopUpContainer>
+	</fx:Declarations>
+	<s:Scroller width="100%" height="100%">
+		<s:Group width="100%" height="100%">
+			<s:Group top="10" horizontalCenter="0" height="35">
+				<s:Label left="0" text="Servicios" verticalCenter="0"/>
+				<s:TextInput id="tServicios" left="120" width="150" enabled="false" verticalCenter="0"/>		
+			</s:Group>
+			<s:Group top="60" horizontalCenter="0" height="35">
+				<s:Label left="0" text="Mercancia" verticalCenter="0"/>
+				<s:TextInput id="tMercancia" left="120" width="150" enabled="false" verticalCenter="0"/>		
+			</s:Group>
+			<s:Group top="110" horizontalCenter="0" height="35">
+				<s:Label left="0" text="IVA" verticalCenter="0"/>
+				<s:TextInput id="tIva" left="120" width="150" enabled="false" verticalCenter="0"/>		
+			</s:Group>
+			<s:Group top="160" horizontalCenter="0" height="35">
+				<s:Label left="0" text="Descuento" verticalCenter="0"/>
+				<s:TextInput id="tDescuento" left="120" width="150" enabled="false" verticalCenter="0"/>		
+			</s:Group>
+			<s:Group top="210" horizontalCenter="0" height="35">
+				<s:Label left="0" text="Rete Fuente" verticalCenter="0"/>
+				<s:TextInput id="tReteFuente" left="120" width="150" enabled="false" verticalCenter="0"/>		
+			</s:Group>
+			<s:Group top="260" horizontalCenter="0" height="35">
+				<s:Label left="0" text="Cta por cobrar" verticalCenter="0"/>
+				<s:TextInput id="tCtaCobrar" left="120" width="150" enabled="false" verticalCenter="0"/>		
+			</s:Group>
+			<s:Button right="123" top="310" label="Grabar" click="button1_clickHandler(event)"
+					  enabled.busyState="false"/>
+		</s:Group>
+	</s:Scroller>
+	
+</s:View>

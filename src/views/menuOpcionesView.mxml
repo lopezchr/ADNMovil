@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009"
+		xmlns:s="library://ns.adobe.com/flex/spark"
+		creationComplete="view1_creationCompleteHandler(event)" title="{Parametros.NomEmpresa}"
+		actionBarVisible="true">
+	
+	<fx:Script>
+		<![CDATA[
+			import DAO.consultaInventario;
+			import DAO.menuOpciones;
+			
+			import utils.Parametros;
+			
+			import mx.collections.ArrayCollection;
+			import mx.events.FlexEvent;
+			
+			import utils.MadreEvent;
+			
+			import spark.components.SplitViewNavigator;
+			import spark.components.ViewNavigator;
+			import spark.events.IndexChangeEvent;
+			import spark.transitions.CrossFadeViewTransition;
+			private var lib:menuOpciones;
+			private var listaOpciones:ArrayCollection;
+			
+			protected function view1_creationCompleteHandler(event:FlexEvent):void
+			{
+				this.removeEventListener(FlexEvent.CREATION_COMPLETE , view1_creationCompleteHandler);
+				lib = new menuOpciones;
+				if(Parametros.Opciones.length == 0){
+					busyIndicator.visible = true;
+					lib.addEventListener("SUCCESS_OPCIONES", cargarLista);
+					lib.addEventListener("FAIL_OPCIONES", failOpciones);
+					lib.start();
+				}else{
+					cargarLista();
+				}	
+			}
+			
+			protected function failOpciones(event:MadreEvent):void
+			{
+				LerrorLabel.text = "Error al cargar los datos!!";
+			}
+			
+			protected function cargarLista(event:Event=null):void
+			{
+				lib.removeEventListener("SUCCESS_OPCIONES", cargarLista);
+				listaOpciones = new ArrayCollection();
+				
+				//opcion por defecto
+				
+				listaOpciones.addItem({codigo:"",nombre:"Bienvenido", MV:""});
+				
+				for each(var opcion:Array in Parametros.Opciones){
+					listaOpciones.addItem({codigo:opcion[0],nombre:opcion[1],MV:opcion[2]});
+				}
+				currentState = "loadedStatus";
+				opcList.dataProvider = listaOpciones;
+				
+			}
+			
+			protected function opcList_changeHandler(event:IndexChangeEvent):void
+			{
+				var modulo:String;
+				var nomOpcion:String = opcList.selectedItem.nombre;
+				
+				// Create a reference to the SplitViewNavigator.
+				var splitNavigator:SplitViewNavigator = navigator.parentNavigator as SplitViewNavigator;
+				
+				// Create a reference to the ViewNavigator for the Detail frame.
+				var detailNavigator:ViewNavigator = splitNavigator.getViewNavigatorAt(1) as ViewNavigator;
+				
+				var crosFadeView:CrossFadeViewTransition = new CrossFadeViewTransition();
+				detailNavigator.defaultPopTransition = crosFadeView;
+				detailNavigator.defaultPushTransition = crosFadeView;
+				
+				detailNavigator.popAll();
+				
+				
+				if(nomOpcion.indexOf("Factura")>=0){
+					detailNavigator.pushView(facturaCredito);
+				}else if(nomOpcion.indexOf("Remisi")>=0){
+					detailNavigator.pushView(error);
+				}else if(nomOpcion.indexOf("Pedido")>=0){
+					detailNavigator.pushView(error);
+				}else if(nomOpcion.indexOf("Provenientes")>=0){
+					detailNavigator.pushView(reciboCaja);
+				}else if(nomOpcion.indexOf("Cartera")>=0){
+					detailNavigator.pushView(consultaCartera, "cartera");
+				}else if(nomOpcion.indexOf("Invent")>=0){
+					detailNavigator.pushView(views.consultaInventario);
+				}else if(nomOpcion.indexOf("Cuentas")>=0){
+					detailNavigator.pushView(consultaProveedores);
+				}else if(nomOpcion.indexOf("Movi")>=0){
+					detailNavigator.pushView(consultaMovimientos);
+				}else if(nomOpcion.indexOf("Balanc")>=0){
+					detailNavigator.pushView(consultaBalance);
+				}else if(nomOpcion.indexOf("Resultados")>=0){
+					detailNavigator.pushView(consultaUtilidad);
+				}else{
+					detailNavigator.pushView(wellcomeView);
+				}
+				
+				splitNavigator.hideViewNavigatorPopUp();
+			}
+			
+		]]>
+	</fx:Script>
+	<s:states>
+		<s:State name="busyStatus"/>
+		<s:State name="loadedStatus"/>
+	</s:states>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:List id="opcList" includeIn="loadedStatus" top="10" bottom="10" width="300"
+			change="opcList_changeHandler(event)" horizontalCenter="0"
+			itemRenderer="utils.menuOpcionesRenderer" selectedIndex="0"></s:List>
+	<s:BusyIndicator id="busyIndicator" includeIn="busyStatus" width="200" height="200"
+					 horizontalCenter="0" verticalCenter="0"/>
+	<s:Label id="LerrorLabel" includeIn="busyStatus" color="#EBAA0D" fontSize="18" fontWeight="bold"
+			 horizontalCenter="0" verticalCenter="140"/>
+</s:View>

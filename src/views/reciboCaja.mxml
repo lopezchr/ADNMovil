@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark" title="Recibo de Caja"
+		creationComplete="view1_creationCompleteHandler(event)">
+	
+	<fx:Declarations>
+		
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			
+			import spark.events.IndexChangeEvent;
+			
+			import utils.Parametros;
+			
+			protected function view1_creationCompleteHandler(event:FlexEvent):void
+			{
+				Parametros.listaMediosPago = new ArrayCollection;
+			}
+			
+		]]>
+	</fx:Script>
+	<s:TabbedViewNavigator left="0" top="0" width="100%" height="100%" >
+		<s:ViewNavigator width="100%" height="100%" label="Cliente" firstView="views.reciboClienteView" />
+		<s:ViewNavigator width="100%" height="100%" label="Params" firstView="views.reciboParamsView" enabled="false"/>
+		<s:ViewNavigator width="100%" height="100%" label="Medios" firstView="views.reciboFormasPagoView" enabled="false"/>
+		<s:ViewNavigator width="100%" height="100%" label="Docs" firstView="views.reciboDocumentosView" enabled="false"/>
+		<s:ViewNavigator width="100%" height="100%" label="Totales" firstView="views.factTotalesView" enabled="false"/>
+	</s:TabbedViewNavigator>
+	
+	<s:actionContent>
+		<s:Button label="Salir" click="NativeApplication.nativeApplication.exit()"/>
+	</s:actionContent>
+</s:View>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark" title="Seleccione una Empresa"
+		creationComplete="view1_creationCompleteHandler(event)">
+	<fx:Script>
+		<![CDATA[
+			import utils.Parametros;
+			
+			import mx.collections.ArrayCollection;
+			import mx.events.FlexEvent;
+			import mx.utils.StringUtil;
+			
+			import spark.events.IndexChangeEvent;
+			private var listaEmpresas:ArrayCollection = new ArrayCollection();;
+			
+			protected function view1_creationCompleteHandler(event:FlexEvent):void
+			{
+				Parametros.resetListas();
+				for each(var empresa:Array in Parametros.Sistemas){
+					listaEmpresas.addItem({nomemp:empresa[1],idemp:empresa[0]});
+					systemsList.dataProvider = listaEmpresas;
+				}
+			}
+			
+			protected function systemsList_changeHandler(event:IndexChangeEvent):void
+			{
+				Parametros.NomEmpresa = systemsList.selectedItem.nomemp;
+				Parametros.IdSistema = StringUtil.trim(systemsList.selectedItem.idemp.toString());
+				navigator.pushView(principalView);
+			}
+			
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+				navigator.popView();
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:actionContent>
+		<s:Button label="Volver"
+				  click="button1_clickHandler(event)"/>
+	</s:actionContent>
+	<s:List id="systemsList" top="10" bottom="10" width="95%" horizontalCenter="0"
+			itemRenderer="utils.systemsRenderer"
+			change="systemsList_changeHandler(event)"></s:List>
+</s:View>

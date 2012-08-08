@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:ItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009"
+				xmlns:s="library://ns.adobe.com/flex/spark">
+	<s:Rect width="100%" height="100%" >
+		<s:fill>
+			<s:LinearGradient rotation="90">
+				<s:GradientEntry color="#FFFFFF" />
+				<s:GradientEntry color="#F3EDE0" ratio="0.9"/>
+				<s:GradientEntry color="#FFFFFF" />
+			</s:LinearGradient>
+		</s:fill>
+	</s:Rect>
+	<s:Label id="lcampoVisible" left="90" top="10" bottom="10" width="50%" fontSize="12"
+			 text="{data.nombre}" textAlign="left" height="13"/>
+	<s:Label right="0" top="10" bottom="10" fontSize="12" text="{data.valor}" textAlign="right" />
+	<s:Label left="0" top="10" bottom="10" fontSize="12" text="{data.codigo}" width="85" />
+</s:ItemRenderer>

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark" title="Detalle"
+		creationComplete="view1_creationCompleteHandler(event)">
+	<s:states>
+		<s:State name="InitialState"/>
+		<s:State name="normalState"/>
+	</s:states>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:CurrencyFormatter id="formater" 
+							 useGrouping="true"
+							 useCurrencySymbol="true"
+							 currencySymbol="$"
+							 positiveCurrencyFormat="0"
+							 negativeCurrencyFormat="1"
+							 />
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import DAO.detalleCartera;
+			
+			import mx.collections.ArrayCollection;
+			import mx.events.FlexEvent;
+			
+			import utils.MadreEvent;
+			
+			private var lib:DAO.consultaDocumento;
+			protected function view1_creationCompleteHandler(event:FlexEvent):void
+			{
+				lib = new DAO.consultaDocumento;
+				
+				lib.addEventListener("readyConsultaFactura", readyDetalle);
+				lib.addEventListener("failConsultaFactura" , failDealle);
+				lib.start(data.doc);
+			}
+			
+			protected function readyDetalle(event:MadreEvent):void
+			{
+				lib.removeEventListener("readyConsultaFactura" , readyDetalle);
+				var detalle:ArrayCollection= new ArrayCollection();
+				
+				for each(var item:Object in event.contenido){
+					//Se pintan todos los datos si estan completo
+					if(item[0]!="$$INCOMPLETEDATA"){
+						detalle.addItem({
+							doc:item[0].toString(),
+							nombre:item[1],
+							value:formater.format(item[2].toString().replace(",","."))
+						});
+					}else{
+						lResponse.text = "Incompleto";
+					}
+				}
+				currentState = "normalState";
+				listaDetalle.dataProvider = detalle;	
+			}
+			
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+				navigator.popView();
+			}
+			
+			protected function failDealle(event:MadreEvent):void
+			{
+				Lvalor.text = "Ha ocurrido un error";
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<s:actionContent>
+		<s:Button label="Volver"
+				  click="button1_clickHandler(event)"/>
+	</s:actionContent>
+	<s:List id="listaDetalle" includeIn="normalState" left="10" right="10" top="40" bottom="50"
+			itemRenderer="utils.facturaRenderer"></s:List>
+	<s:BusyIndicator id="busyIndicator" includeIn="InitialState" width="200" height="200"
+					 horizontalCenter="0" verticalCenter="0"/>
+	<s:Label id="Lvalor" right="10" bottom="10" text="Total: {data.value}"
+			 color="#18B6F0" fontWeight="bold"/>
+	<s:Label left="30" top="10" color="#6801B0" fontWeight="bold" text="Referencia"
+			 left.InitialState="10" top.InitialState="10"/>
+	<s:Label left="120" top="10" text="Nombre"
+			 color="#6801B0" fontWeight="bold"/>
+	<s:Label right="30" top="10" text="Valor"
+			 color="#6801B0" fontWeight="bold"/>
+	<s:Label id="lResponse" left="10" bottom="10" color="#F06F08"
+			 fontWeight="bold"/>
+</s:View>

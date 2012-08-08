@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark" title="{data.nombre}"
+		creationComplete="view1_creationCompleteHandler(event)"
+		currentState="InitialState">
+	<s:states>
+		<s:State name="InitialState"/>
+		<s:State name="normalState"/>
+	</s:states>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:CurrencyFormatter id="formater" 
+							 useGrouping="true"
+							 useCurrencySymbol="true"
+							 currencySymbol="$"
+							 positiveCurrencyFormat="0"
+							 negativeCurrencyFormat="1"
+							 
+							 />
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import DAO.detalleArticulo;
+			
+			import mx.collections.ArrayCollection;
+			import mx.events.FlexEvent;
+			
+			import utils.MadreEvent;
+			
+			import spark.events.IndexChangeEvent;
+			
+			private var lib:DAO.detalleArticulo;
+			protected function view1_creationCompleteHandler(event:FlexEvent):void
+			{
+				lib = new DAO.detalleArticulo;
+				
+				lib.addEventListener("readyDetalleArticulo", readyDetalle);
+				lib.addEventListener("failDetalleArticulo" , failDealle);
+				lib.start(data.id);
+			}
+			
+			protected function readyDetalle(event:MadreEvent):void
+			{
+				lib.removeEventListener("readyDetalleArticulo" , readyDetalle);
+				var detalle:ArrayCollection= new ArrayCollection();
+				
+				for each(var item:Object in event.contenido){
+					//Se verifica que los datos vengan completos
+					if(item[0]!="$$INCOMPLETEDATA"){
+						detalle.addItem({
+							v1:item[0].toString(),
+							v2:item[1].toString()
+						});
+					}else{
+						lResponse.text = "Incompleto";
+					}
+					
+				}
+				currentState = "normalState";
+				listaDetalle.dataProvider = detalle;	
+			}
+			
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+				navigator.popView();
+			}
+			
+			protected function failDealle(event:MadreEvent):void
+			{
+				lResponse.text = "Ha ocurrido un error";
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<s:actionContent>
+		<s:Button label="Volver"
+				  click="button1_clickHandler(event)"/>
+	</s:actionContent>
+	<s:List id="listaDetalle" includeIn="normalState" left="10" right="10" top="20" bottom="50"
+			itemRenderer="utils.lista2Renderer"/>
+	<s:BusyIndicator id="busyIndicator" includeIn="InitialState" width="200" height="200"
+					 horizontalCenter="0" verticalCenter="0"/>
+	<s:Label id="Lvalor" right="10" bottom="10" text="" color="#18B6F0" fontWeight="bold"/>
+	<s:Label id="lResponse" left="10" bottom="10" color="#F06F08"
+			 fontWeight="bold"/>
+</s:View>

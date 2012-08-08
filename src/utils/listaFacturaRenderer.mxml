@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:ItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009"
+				xmlns:s="library://ns.adobe.com/flex/spark"
+				creationComplete="itemrenderer1_creationCompleteHandler(event)">
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.events.FlexEvent;
+			
+			protected function itemrenderer1_creationCompleteHandler(event:FlexEvent):void
+			{
+				lsubtotal.text = formater.format(data.subtotal);
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<s:CurrencyFormatter id="formater" 
+							 useGrouping="true"
+							 useCurrencySymbol="true"
+							 currencySymbol="$"
+							 positiveCurrencyFormat="0"
+							 negativeCurrencyFormat="1"
+							 />
+	</fx:Declarations>
+	
+	<s:Rect width="100%" height="100%" >
+		<s:fill>
+			<s:LinearGradient rotation="90">
+				<s:GradientEntry color="#FFFFFF" />
+				<s:GradientEntry color="#F3EDE0" ratio="0.9"/>
+				<s:GradientEntry color="#FFFFFF" />
+			</s:LinearGradient>
+		</s:fill>
+	</s:Rect>
+	<s:Label id="lcampoVisible" right="100" top="10" bottom="10" fontSize="12" width="60"
+			 text="{data.cantidad}" height="13" textAlign="right"/>
+	<s:Label id="lsubtotal" right="0" top="10" bottom="10" fontSize="12" textAlign="right"/>
+	<s:Label left="0" top="10" bottom="10" fontSize="12" text="{data.referencia+'-'+data.nombre}" width="50%" height="13"/>
+</s:ItemRenderer>

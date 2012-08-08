@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009"
+		xmlns:s="library://ns.adobe.com/flex/spark"
+		title="Consulta Balance"
+		creationComplete="view1_creationCompleteHandler(event)"
+		currentState="initialState">
+
+	<s:states>
+		<s:State name="initialState"/>
+		<s:State name="busyState"/>
+	</s:states>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:CurrencyFormatter id="formater" 
+							 useGrouping="true"
+							 useCurrencySymbol="true"
+							 currencySymbol="$"
+							 positiveCurrencyFormat="0"
+							 negativeCurrencyFormat="1"
+							 />
+		
+		<s:SkinnablePopUpContainer id="pop1">
+			<s:Rect width="100%" height="100%" topRightRadiusX="15" bottomLeftRadiusX="15" bottomRightRadiusX="15">
+				<s:stroke>
+					<s:SolidColorStroke color="#424242"/>
+				</s:stroke>
+				<s:fill>
+					<s:SolidColor color="#424242"/>
+				</s:fill>
+			</s:Rect>
+			
+			<s:VGroup horizontalAlign="center"
+					  paddingTop="20" paddingLeft="20" paddingRight="20" paddingBottom="20">
+				<s:DateSpinner id="calendar" x="10" y="10" width="200" height="200" displayMode="date"
+							   fontFamily="Verdana" fontSize="14" fontStyle="normal" fontWeight="bold"
+							   textDecoration="none"/>
+				<s:Button label="Aplicar" height="35" click="pop1.close();dateUpdate();"/>
+			</s:VGroup>			
+		</s:SkinnablePopUpContainer>
+		
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import DAO.consultaAuxiliar;
+			import DAO.consultaBalance;
+
+			import utils.Parametros;
+			
+			import flash.sampler.NewObjectSample;
+			
+			import flashx.textLayout.formats.Float;
+			
+			import mx.collections.ArrayCollection;
+			import mx.core.mx_internal;
+			import mx.events.FlexEvent;
+			
+			import utils.MadreEvent;
+			
+			import spark.events.IndexChangeEvent;
+			
+			import utils.Utilidades;
+			
+			private var lib:DAO.consultaBalance;
+			private var selecteddate:String = "";
+			
+			
+			
+			protected function view1_creationCompleteHandler(event:FlexEvent):void
+			{
+				if(Parametros.ListaBalance.length > 0){
+					readyLista();
+				}
+				var d:Date = new Date;
+				selecteddate = Utilidades.dateToChain(d);
+				ldate.text = "Fecha: " + d.date +"/"+ (d.month+1) +"/"+d.fullYear;
+				
+			}
+			
+			protected function bBuscar_clickHandler(event:MouseEvent):void
+			{
+				lResponse.text = ""
+				lTotal.text = "";
+				
+				currentState = "busyState";
+				lib = new DAO.consultaBalance;
+				lib.addEventListener("readyBalance", readyLista);
+				lib.addEventListener("failBalance", failCousulta);
+				lib.start(tinput.text,selecteddate);
+			}
+			
+			protected function readyLista(event:Event=null):void
+			{
+				var total:Number = 0;
+				var lista:ArrayCollection = new ArrayCollection();
+								
+				for each(var item:Object in Parametros.ListaBalance){
+					//Se verifica que los datos vengan completos
+					if(item[0]!="$$INCOMPLETEDATA"){
+						lista.addItem({
+							id:"",
+							codigo:item[0],
+							nombre:item[1],
+							valor:formater.format(item[2].toString().replace(",","."))
+						});
+						
+						total += parseFloat(item[2].toString().replace(",","."));
+					}else{
+						lResponse.text = "Incompleto";
+					}
+				}
+				currentState = "initialState";
+				lTotal.text = "Total: " +formater.format(total.toString());
+				listadoConsulta.dataProvider = lista;
+			}
+			
+			protected function listadoConsulta_changeHandler(event:IndexChangeEvent):void
+			{
+				navigator.pushView(views.consultaAuxiliar , {codigo:listadoConsulta.selectedItem.codigo, sdate:selecteddate});
+			}
+			
+			protected function failCousulta(event:MadreEvent):void
+			{
+				currentState = "initialState";
+				lResponse.text = event.contenido.toString();
+			}		
+			
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+				//Se posiciona el popup en la posicion del evento de clic mas el ancho de la barra superior
+				pop1.y = event.localY + 60 ;
+				pop1.x = event.localX ;
+				pop1.open(this);
+			}
+			protected function dateUpdate():void{
+				
+				ldate.text = "Fecha: " + calendar.selectedDate.date +"/"+ (calendar.selectedDate.month+1) +"/"+calendar.selectedDate.fullYear;
+				selecteddate = Utilidades.dateToChain(calendar.selectedDate);
+			}
+			
+		]]>
+	</fx:Script>
+	<s:actionContent>
+		<s:Button label="Salir" click="NativeApplication.nativeApplication.exit()"/>
+	</s:actionContent>
+	
+	<s:Button left="10" top="10" 
+		label="*" enabled.busyState="false" height="30" click="button1_clickHandler(event)"/>
+		
+	<s:Label  id="ldate" text="Fecha:" left="60" top="20"/>
+
+	<s:TextInput id="tinput" left="10" top="50" width="185"
+				 prompt.initialState="Nom/Cod Cuenta"/>
+	<s:Button id="bBuscar" left="210" top="50" height="34" label="Consultar"
+			  click="bBuscar_clickHandler(event)"
+			  enabled.busyState="false"/>
+	<s:List id="listadoConsulta" left="10" right="10" top="100" bottom="40"
+			change="listadoConsulta_changeHandler(event)" fontFamily="_sans"
+			itemRenderer="utils.lista3Renderer"></s:List>
+	<s:Label id="lTotal" includeIn="initialState" right="10" bottom="10" color="#18B6F0"
+			 fontSize="16" fontWeight="bold"/>
+	
+	<s:BusyIndicator includeIn="busyState" left="10" bottom="10"/>
+	<s:Label id="lResponse" left="10" bottom="10" color="#F06F08"
+			 fontWeight="bold"/>
+</s:View>

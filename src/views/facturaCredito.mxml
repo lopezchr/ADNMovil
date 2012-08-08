@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009"
+		xmlns:s="library://ns.adobe.com/flex/spark"
+		actionBarVisible="true" tabBarVisible="false" title="Factura Credito"
+		creationComplete="view1_creationCompleteHandler(event)">
+	
+	<fx:Declarations>
+	
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			
+			import spark.events.IndexChangeEvent;
+			
+			import utils.Parametros;
+			
+			protected function view1_creationCompleteHandler(event:FlexEvent):void
+			{
+				Parametros.listaItemsFactura = new ArrayCollection;
+			}
+			
+		]]>
+	</fx:Script>
+	<s:TabbedViewNavigator left="0" top="0" width="100%" height="100%" >
+		<s:ViewNavigator width="100%" height="100%" label="Cliente" firstView="views.factClienteView" />
+		<s:ViewNavigator width="100%" height="100%" label="Params" firstView="views.factParamsView" enabled="false"/>
+		<s:ViewNavigator width="100%" height="100%" label="Items" firstView="views.factItemsView" enabled="false"/>
+		<s:ViewNavigator width="100%" height="100%" label="Totales" firstView="views.factTotalesView" enabled="false"/>
+	</s:TabbedViewNavigator>
+	
+	<s:actionContent>
+		<s:Button label="Salir" click="NativeApplication.nativeApplication.exit()"/>
+	</s:actionContent>
+</s:View>

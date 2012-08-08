@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009"
+		xmlns:s="library://ns.adobe.com/flex/spark"
+		actionBarVisible="false" tabBarVisible="true"
+		creationComplete="view1_creationCompleteHandler(event)">
+	<s:states>
+		<s:State name="initialState"/>
+		<s:State name="busyState"/>
+	</s:states>
+	
+	<fx:Script>
+		<![CDATA[
+			import flash.utils.flash_proxy;
+			
+			import mx.collections.ArrayCollection;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			
+			import spark.events.IndexChangeEvent;
+			
+			import utils.Parametros;
+			
+			private var actualIndex:Number;
+			
+			
+			protected function addItem_clickHandler(event:MouseEvent):void
+			{
+				navigator.pushView(consultaInventario , Parametros.paramsFact.bodega.id);
+			}
+			
+			protected function listadoConsulta_changeHandler(event:MouseEvent):void
+			{
+				currentState = "busyState";
+				actualIndex = listadoConsulta.selectedIndex;
+				
+				popDetalle.open(this);
+				PopUpManager.centerPopUp(popDetalle);
+				
+				var selected:Object = Parametros.listaItemsFactura.getItemAt(actualIndex);
+				
+				lreferenceItem.text = selected.referencia;
+				lnameItem.text = selected.nombre;
+				lexistenciaItem.text = selected.existencia;
+				tcantidad.text = selected.cantidad;
+				tvaloru.text = selected.valoru;
+				tdesceunto.text = selected.descuento;
+				ltotal.text = formater.format(selected.subtotal);
+				currentState = "initialState";
+				
+			}
+			
+			protected function updateList(event:MouseEvent):void
+			{
+				if(Number(tcantidad.text)==0){
+					//remueve el articulo
+					Parametros.listaItemsFactura.removeItemAt(actualIndex);
+					popDetalle.close();
+					listadoConsulta.selectedIndex = -1;
+					updateForm();
+				}else{
+					if(Number(lexistenciaItem.text)< Number(tcantidad.text)){
+						lResponsePop.text = "Existencia Insuficiente";
+					}else{
+						Parametros.listaItemsFactura.getItemAt(actualIndex).cantidad = tcantidad.text;
+						Parametros.listaItemsFactura.getItemAt(actualIndex).descuento = tdesceunto.text;
+						Parametros.listaItemsFactura.getItemAt(actualIndex).valoru = tvaloru.text;
+						popDetalle.close();
+						
+						updateForm();
+					}
+				}
+			}
+			
+			private function maketotal(even:TextEvent=null):void{
+				lResponsePop.text = "";
+				
+				var cantidad:Number = 0;
+				var descuento:Number = 0;
+				var grav:Number = 0;
+				var valoru:Number = 0;
+				
+				if(!isNaN(Number(tcantidad.text))){
+					valoru = Number(tvaloru.text);
+				}else{
+					lResponsePop.text = "Val/u Invalido";
+				}
+				
+				if(!isNaN(Number(tcantidad.text))){
+					cantidad = Number(tcantidad.text);
+				}else{
+					lResponsePop.text = "Cantidad Invalida";
+				}
+				
+				if(!isNaN(Number(tdesceunto.text))){
+					descuento= Number(tdesceunto.text);
+				}else{
+					lResponsePop.text = "Descuento Invalido";
+				}
+				
+				var total:Number = Number(valoru)*cantidad*(100-descuento)/100;
+				
+				Parametros.listaItemsFactura.getItemAt(actualIndex).subtotal=total;
+				
+				ltotal.text = formater.format(total.toString());
+			}
+			
+			//funcion que alcualiza el contenido de la lista
+			private function updateForm():void{
+				var itemRen:IFactory = listadoConsulta.itemRenderer;
+				listadoConsulta.itemRenderer = null;
+				listadoConsulta.itemRenderer = itemRen;
+				
+				var total:Number = 0;
+				for each(var item:Object in Parametros.listaItemsFactura){
+					total += Number(item.subtotal);
+				}
+				lTotalCompra.text = formater.format(total);
+			}
+			
+			protected function view1_creationCompleteHandler(event:FlexEvent):void
+			{
+				updateForm();				
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<s:CurrencyFormatter id="formater" 
+							 useGrouping="true"
+							 useCurrencySymbol="true"
+							 currencySymbol="$"
+							 positiveCurrencyFormat="0"
+							 negativeCurrencyFormat="1"
+							 />
+		<s:SkinnablePopUpContainer id="popDetalle">
+			<s:Rect width="100%" height="100%" topRightRadiusX="15" bottomLeftRadiusX="15" bottomRightRadiusX="15">
+				<s:stroke>
+					<s:SolidColorStroke color="#424242"/>
+				</s:stroke>
+				<s:fill>
+					<s:SolidColor color="#424242"/>
+				</s:fill>
+			</s:Rect>
+			<s:VGroup width="100%" horizontalAlign="center" paddingBottom="20" paddingLeft="20" paddingRight="20" paddingTop="20">
+				<s:Group>
+					<s:Group top="10" height="30">
+						<s:Label text="Ref: " left="0" verticalCenter="0" color="White" fontWeight="bold"/>
+						<s:Label id="lreferenceItem" left="50" verticalCenter="0" color="White" fontWeight="bold"/>
+					</s:Group>
+					<s:Group top="40" height="30">
+						<s:Label text="Nom: " left="0" verticalCenter="0" color="White" fontWeight="bold"/>
+						<s:Label id="lnameItem" left="50" verticalCenter="0" color="White" fontWeight="bold" width="150" height="16"/>
+					</s:Group>
+					<s:Group top="70" height="30">
+						<s:Label text="Exis: " verticalCenter="0" left="0" color="White" fontWeight="bold"/>
+						<s:Label id="lexistenciaItem" verticalCenter="0" left="50" color="White" fontWeight="bold"/>
+					</s:Group>
+					<s:Group top="100" height="30">
+						<s:Label text="Val/u: " verticalCenter="0" left="0" color="White" fontWeight="bold"/>
+						<s:TextInput id="tvaloru" verticalCenter="0" left="50" fontWeight="bold" width="100"
+									 keyUp="maketotal()" textInput="maketotal()" skinClass="spark.skins.mobile.TextInputSkin"/>
+					</s:Group>
+					<s:Group top="140" left="0">
+						<s:Label text="Can: " left="0" verticalCenter="0" color="White" fontWeight="bold"/>
+						<s:TextInput id="tcantidad" text="0" verticalCenter="0" width="50" left="50" prompt="Cantidad" 
+									 keyUp="maketotal()" textInput="maketotal()" skinClass="spark.skins.mobile.TextInputSkin"/>
+					</s:Group>
+					<s:Group top="180">
+						<s:Label text="Des: " left="0" verticalCenter="0" color="White" fontWeight="bold"/>
+						<s:TextInput id="tdesceunto" text="0" width="50" verticalCenter="0" left="50" prompt="Descuento"
+									 keyUp="maketotal()" textInput="maketotal()" skinClass="spark.skins.mobile.TextInputSkin"/>
+					</s:Group>
+					<s:Group top="220" height="30">
+						<s:Label text="Subtotal: " left="0" verticalCenter="0" color="White" fontWeight="bold"/>
+						<s:Label id="ltotal" left="100" verticalCenter="0" color="White" fontWeight="bold"/>
+					</s:Group>
+					<s:HGroup top="260">
+						<s:Button label="Actualizar" height="35" click="updateList(event)" />
+						<s:Spacer width="10"/>
+						<s:Button label="Cancelar" height="35" click="popDetalle.close();"/>
+					</s:HGroup>
+					<s:Label id="lResponsePop" top="300" left="0" color="#F06F08" fontWeight="bold"/>
+					<s:BusyIndicator horizontalCenter="0" verticalCenter="0" includeIn="busyState" width="50" height="50"/>
+				</s:Group>
+			</s:VGroup>				
+		</s:SkinnablePopUpContainer>
+	</fx:Declarations>
+	<s:Group left="10" right="10" top="10">
+		<s:Button right="0" width="40" height="40" click="addItem_clickHandler(event)"
+				  icon="img/additem.png" verticalCenter="0"/>
+		<s:Label right="50" text="Agregar Articlo" verticalCenter="0"/>
+	</s:Group>
+	<s:List id="listadoConsulta" left="10" right="10" 
+			top="90" bottom="40"
+			itemRenderer="utils.listaFacturaRenderer"
+			dataProvider="{Parametros.listaItemsFactura}"
+			click="listadoConsulta_changeHandler(event)"></s:List>	
+	<s:Label left="10" top="65" color="#6801B0" fontWeight="bold" text="Referencia-Nombre"/>
+	<s:Label right="100" top="65" width="60" color="#6801B0" fontWeight="bold" text="Cant"
+			 textAlign="right"/>
+	<s:Label right="10" top="65" color="#6801B0" fontWeight="bold" text="SubTotal"/>
+	<s:Label id="lTotalCompra" right="10" bottom="10" fontSize="16"
+			 color="#18B6F0" fontWeight="bold"/>
+</s:View>

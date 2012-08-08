@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:ItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009"
+				xmlns:s="library://ns.adobe.com/flex/spark"
+				creationComplete="onRenderer(event)">
+	<fx:Script>
+		<![CDATA[
+			import mx.events.FlexEvent;	
+			protected function onRenderer(event:FlexEvent):void
+			{
+				switch(data.medioPago){
+					case "E":
+						lTipo.text = "Efectivo";
+						break;
+					case "C":
+						lTipo.text = "Cheke";
+						break;
+					case "0":
+						lTipo.text = "Otro";
+						break;
+				}
+				
+				lvalor.text = formater.format(data.valor);
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<s:CurrencyFormatter id="formater" 
+							 useGrouping="true"
+							 useCurrencySymbol="true"
+							 currencySymbol="$"
+							 positiveCurrencyFormat="0"
+							 negativeCurrencyFormat="1"
+							 />
+	</fx:Declarations>
+	
+	<s:Rect width="100%" height="100%" >
+		<s:fill>
+			<s:LinearGradient rotation="90">
+				<s:GradientEntry color="#FFFFFF" />
+				<s:GradientEntry color="#F3EDE0" ratio="0.9"/>
+				<s:GradientEntry color="#FFFFFF" />
+			</s:LinearGradient>
+		</s:fill>
+	</s:Rect>
+	<s:Label id="lcampoVisible" left="110" top="10" bottom="10" fontSize="12"
+			 text="{data.num+' - '+data.bank}" height="13"/>
+	<s:Label id="lvalor" right="0" top="10" bottom="10" fontSize="12" textAlign="right"/>
+	<s:Label id="lTipo" left="0" top="10" bottom="10" fontSize="12" width="100" height="13"/>
+</s:ItemRenderer>

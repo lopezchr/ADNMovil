@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark" actionBarVisible="false"
+		creationComplete="view1_creationCompleteHandler(event)">
+	
+	<fx:Script>
+		<![CDATA[
+			import flashx.textLayout.elements.BreakElement;
+			
+			import mx.collections.ArrayCollection;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			
+			import spark.managers.PersistenceManager;
+			
+			import utils.Parametros;
+			import utils.Utilidades;
+			import utils.mediosPagoRenderer;
+			
+			private var formasPagoList:ArrayCollection; 			
+			
+			protected function view1_creationCompleteHandler(event:FlexEvent):void
+			{
+			}
+			
+			//funcion que muestra el popup al pulsar el boton de agregar
+			protected function addItem_clickHandler(event:MouseEvent):void
+			{				
+				popMetodo.open(this);
+				PopUpManager.centerPopUp(popMetodo);
+				
+				bnext.label = "Agregar";
+				
+				rEfectivo.enabled = true;
+				rCheke.enabled = true;
+				rOtros.enabled = true;
+				
+				tnumero.text = "";
+				tnumero.enabled= false;
+				tbank.text = "";
+				tbank.enabled = false;
+				
+				tvalor.text= "";
+			}
+			
+			//Funcion que inabilita los campos del popup segun la posicion de el radiobutton
+			protected function radiobutton_clickHandler(event:MouseEvent):void
+			{
+				if(rEfectivo.selected){
+					tnumero.text= "";
+					tnumero.enabled= false;
+					tbank.text = "";
+					tbank.enabled = false;
+				}else{
+					tnumero.enabled= true;
+					tbank.enabled = true;
+				}
+			}
+						
+			//Funcion que agrega medio de pago
+			protected function addMedioPago_clickHandler(event:MouseEvent):void
+			{
+				lResponsePop.text = "";
+				if(bnext.label == "Agregar"){
+					var medio:Object;
+					if(rEfectivo.selected){
+						if(!isNaN(Number(tvalor.text))){
+							medio = {medioPago:"E",num:"",bank:"",valor:tvalor.text};
+							Parametros.listaMediosPago.addItem(medio);
+							updateForm();
+							popMetodo.close();
+						}else{
+							lResponsePop.text = "Selecciones un valor valido";
+						}
+					}else if(rCheke.selected){
+						if(tbank.text != "" || tnumero.text != ""){
+							medio = {medioPago:"C",num:tnumero.text,bank:tbank.text,valor:tvalor.text};
+							Parametros.listaMediosPago.addItem(medio);
+							updateForm();
+							popMetodo.close();
+						}else{
+							lResponsePop.text = "Parametros incompletos";
+						}
+					}else{
+						if(tbank.text != "" || tnumero.text != ""){
+							medio = {medioPago:"O",num:tnumero.text,bank:tbank.text,valor:tvalor.text};
+							Parametros.listaMediosPago.addItem(medio);
+							updateForm();
+							popMetodo.close();
+						}else{
+							lResponsePop.text = "Parametros incompletos";
+						}
+					}
+				}else{
+					Parametros.listaMediosPago.getItemAt(listaMedios.selectedIndex).num = tnumero.text;
+					Parametros.listaMediosPago.getItemAt(listaMedios.selectedIndex).bank = tbank.text;
+					Parametros.listaMediosPago.getItemAt(listaMedios.selectedIndex).valor = tvalor.text;
+					updateForm();
+					popMetodo.close();
+				}
+			}
+			
+			//funcion que actualiza la lista
+			private function updateForm():void{
+				
+				var itemRen:IFactory = listaMedios.itemRenderer;
+				listaMedios.itemRenderer = null;
+				listaMedios.itemRenderer = itemRen;
+				
+				
+				var total:Number = 0;
+				for each(var item:Object in Parametros.listaMediosPago){
+					total += Number(item.valor);
+				}
+				
+				lTotal.text = formater.format(total);
+				
+			}
+			
+			//funcion para editar valores de las listas
+			protected function listaMedios_clickHandler(event:MouseEvent):void
+			{
+				var lista:ArrayCollection = Parametros.listaMediosPago;
+				var item:Object = Parametros.listaMediosPago.getItemAt(listaMedios.selectedIndex);
+				
+				rEfectivo.enabled = false ;
+				rCheke.enabled = false ;
+				rOtros.enabled = false ;
+				
+				switch(item.medioPago){
+					case "E":
+						rEfectivo.selected = true;
+						tbank.enabled = false;
+						tnumero.enabled= false;
+						tnumero.text = "";
+						tbank.text = "";
+						break;
+					case "C":
+						rCheke.selected = true;
+						tnumero.enabled= true;
+						tbank.enabled = true;
+						tnumero.text = item.num;
+						tbank.text = item.bank;
+						break;
+					case "0":
+						
+						rOtros.selected = true;
+						tnumero.enabled= true;
+						tbank.enabled = true;
+						tnumero.text = item.num;
+						tbank.text = item.bank;
+						break;
+				}
+				tvalor.text = item.valor;
+				bnext.label = "Actualizar";
+				popMetodo.open(this);
+				PopUpManager.centerPopUp(popMetodo);
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<s:CurrencyFormatter id="formater" 
+							 useGrouping="true"
+							 useCurrencySymbol="true"
+							 currencySymbol="$"
+							 positiveCurrencyFormat="0"
+							 negativeCurrencyFormat="1"
+							 />
+		
+		<s:SkinnablePopUpContainer id="popMetodo">
+			<s:Rect width="100%" height="100%" topRightRadiusX="15" bottomLeftRadiusX="15" bottomRightRadiusX="15">
+				<s:stroke>
+					<s:SolidColorStroke color="#424242"/>
+				</s:stroke>
+				<s:fill>
+					<s:SolidColor color="#424242"/>
+				</s:fill>
+			</s:Rect>
+			<s:VGroup width="100%" horizontalAlign="center" paddingBottom="20" paddingLeft="20" paddingRight="20" paddingTop="20">
+				<s:Group>
+					<s:VGroup top="10" height="30">
+						<s:RadioButton id="rEfectivo" label="Efectivo" color="White" fontWeight="bold" selected="true" 
+									   click="radiobutton_clickHandler(event)"/>
+						<s:RadioButton id="rCheke" label="Cheque" color="White" fontWeight="bold" 
+									   click="radiobutton_clickHandler(event)"/>
+						<s:RadioButton id="rOtros" label="Otro" color="White" fontWeight="bold" 
+									   click="radiobutton_clickHandler(event)"/>
+					</s:VGroup>
+					<s:Group top="130" height="30">
+						<s:Label text="Num: " left="0" verticalCenter="0" color="White" fontWeight="bold"/>
+						<s:TextInput id="tnumero" verticalCenter="0" left="100" fontWeight="bold" width="100"/>
+					</s:Group>
+					<s:Group top="170" height="30">
+						<s:Label text="Banco(cod): " left="0" verticalCenter="0" color="White" fontWeight="bold"/>
+						<s:TextInput id="tbank" verticalCenter="0" left="100" fontWeight="bold" width="100"/>
+					</s:Group>
+					<s:Group top="210" height="30">
+						<s:Label text="Valor: " left="0" verticalCenter="0" color="White" fontWeight="bold"/>
+						<s:TextInput id="tvalor" verticalCenter="0" left="100" fontWeight="bold" width="100"/>
+					</s:Group>
+					<s:HGroup top="260">
+						<s:Button id="bnext" height="35" click="addMedioPago_clickHandler(event)"/>
+						<s:Spacer width="10"/>
+						<s:Button label="Cancelar" height="35" click="popMetodo.close()"/>
+					</s:HGroup>
+					<s:Label id="lResponsePop" top="300" left="0" color="#F06F08" fontWeight="bold"/>
+				</s:Group>
+			</s:VGroup>				
+		</s:SkinnablePopUpContainer>
+	</fx:Declarations>
+	
+	
+	<s:Group left="10" right="10" top="10">
+		<s:Button right="0" width="40" height="40" click="addItem_clickHandler(event)"
+				  icon="img/additem.png" verticalCenter="0"/>
+			<s:Label right="50" verticalCenter="0" text="Adicionar medio de Pago"/>
+	</s:Group>
+	<s:Group left="10" right="10" top="70" height="35">
+		<s:Label left="0" verticalCenter="0" text="Medio Pago" color="#6801B0" fontWeight="bold"/>
+		<s:Label left="110" verticalCenter="0" text="Numero-Banco" color="#6801B0" fontWeight="bold"/>
+		<s:Label right="0" verticalCenter="0" text="Valor" color="#6801B0" fontWeight="bold"/>
+	</s:Group>
+	
+	<s:List left="10" right="10" top="100" bottom="50"
+			id="listaMedios"
+			dataProvider="{Parametros.listaMediosPago}"
+			itemRenderer="utils.mediosPagoRenderer"
+			click="listaMedios_clickHandler(event)"></s:List>
+	
+	<s:BusyIndicator visible="false" id="busyidicator" left="10" bottom="10" width="30" height="30"/>
+	<s:Label id="lTotal" right="10" bottom="10" fontSize="16"
+			 color="#18B6F0" fontWeight="bold"/>
+</s:View>
