@@ -10,12 +10,12 @@ package utils
 	{
 		public static var mobileid:String = "";
 		
-		//private static const wsdl:String = "http://192.168.10.12:8084/WS_ADNMovil/ADN_Mobile?wsdl";
+		
+		//http://190.145.31.162:4480
+		//http://192.168.10.206:8084
 		private static const wsdl:String = "http://192.168.10.206:8084/WS_ADNMovil/ADN_Mobile?wsdl";
-		
-		//private static const wsdl:String = "http://190.145.31.162:4480/WS_ADNMovil/ADN_Mobile?wsdl";
-		
 		private static const wsdldoc:String = "http://192.168.10.206:8084/WS_ADNMovil/ADN_Document?wsdl";
+		
 		private static const securityKey:String="key";
 		private static var adnDB:String;
 		private static var adnPwd:String;

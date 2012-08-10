@@ -76,6 +76,8 @@
 			import DAO.detalleArticulo;
 			import DAO.factArticulo;
 			
+			import flash.sampler.NewObjectSample;
+			
 			import flashx.textLayout.formats.Float;
 			
 			import mx.collections.ArrayCollection;
@@ -109,14 +111,16 @@
 			
 			protected function view1_creationCompleteHandler(event:FlexEvent):void
 			{
-				if(Parametros.ListaInventario.length >0){
-					readyLista();	
-				}
 				if(data != null){
 					bback.label = "Volver";
 					title = "Escoja los articulos";
+					Parametros.ListaInventario = new Array;
 				}else{
 					bback.label = "Salir";
+				}
+				
+				if(Parametros.ListaInventario.length >0){
+					readyLista();	
 				}
 			}
 			

@@ -11,14 +11,14 @@
 		<![CDATA[
 			import DAO.factTotales;
 			
-			import utils.Parametros;
-			
+			import mx.collections.ArrayCollection;
 			import mx.events.FlexEvent;
 			import mx.managers.PopUpManager;
 			
-			import utils.MadreEvent;
-			
 			import spark.components.TabbedViewNavigator;
+			
+			import utils.MadreEvent;
+			import utils.Parametros;
 			
 			private var lib:DAO.factTotales;
 			
@@ -96,6 +96,7 @@
 					tn.getItemAt(2).enabled = false;
 					tn.getItemAt(3).enabled = false;
 					tn.selectedIndex = 0;
+					Parametros.listaItemsFactura = new ArrayCollection;
 				}
 			}
 			
